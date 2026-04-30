@@ -14,6 +14,16 @@
       "author": {
         "name": "Michael-laspina"
       }
+    },
+    {
+      "name": "humaninloop",
+      "source": "./plugins/humaninloop",
+      "description": "Specification-driven development workflow: setup → specify → plan → tasks → implement",
+      "version": "3.3.2",
+      "author": {
+        "name": "deepeshBodh",
+        "url": "https://github.com/deepeshBodh/human-in-loop"
+      }
     }
   ]
 }
