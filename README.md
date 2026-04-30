@@ -1,83 +1,470 @@
-# claude-workflow
+# HumanInLoop
 
-A Claude Code plugin that enforces structured, human-in-the-loop software development. Every feature goes through **Idea → Spec → Plan → Implement** with mandatory human approval gates before any code is written.
+**Stop vibe coding. Ship software that lasts.**
 
-Inspired by [human-in-loop](https://github.com/deepeshBodh/human-in-loop).
+[Website](https://humaninloop.dev) • [Quick Start](#quick-start) • [Roadmap](./ROADMAP.md) • [Changelog](./CHANGELOG.md)
 
-## Install
+---
+
+## What is HumanInLoop?
+
+HumanInLoop is a Claude Code plugin that enforces **specification-driven development**—ensuring architectural decisions are made by humans before AI writes code.
+
+Instead of letting AI improvise your architecture, you guide it through a structured workflow:
+
+```
+Idea → Specification → Plan → Tasks → Implementation
+```
+
+Every step produces artifacts you can review, refine, and approve before moving forward.
+
+---
+
+## The Workflow
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌───────┐  ┌───────────┐                   │
+│  │  SETUP  │─▶│ SPECIFY │─▶│ PLAN │─▶│ TASKS │─▶│ IMPLEMENT │                   │
+│  └─────────┘  └─────────┘  └──────┘  └───────┘  └───────────┘                   │
+│       │            │           │          │            │                         │
+│       ▼            ▼           ▼          ▼            ▼                         │
+│  ┌─────────┐  ┌─────────┐  ┌──────┐  ┌───────┐  ┌───────────┐                   │
+│  │ consti- │  │  spec   │  │ 6    │  │ tasks │  │   code    │                   │
+│  │ tution  │  │   .md   │  │ files│  │  .md  │  │  changes  │                   │
+│  └─────────┘  └─────────┘  └──────┘  └───────┘  └───────────┘                   │
+│       │            │           │          │            │                         │
+│       └────────────┴───────────┴──────────┴────────────┘                         │
+│                                    │                                             │
+│                              ┌─────▼─────┐                                       │
+│                              │   AUDIT   │                                       │
+│                              │  (review) │                                       │
+│                              └───────────┘                                       │
+│                                                                                  │
+│  ○────────○────────○────────○────────○  Human review checkpoints                │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+| Stage | Command | What You Get |
+|-------|---------|--------------|
+| **Setup** | `/humaninloop:setup` | Project constitution with your standards |
+| **Specify** | `/humaninloop:specify` | Structured spec with user stories and requirements |
+| **Plan** | `/humaninloop:plan` | Technical requirements, constraints, decisions, data models, API contracts |
+| **Tasks** | `/humaninloop:tasks` | Ordered task list with TDD cycles |
+| **Audit** | `/humaninloop:audit` | Quality analysis across all artifacts |
+| **Implement** | `/humaninloop:implement` | Guided implementation with progress tracking |
+
+Each command produces artifacts you review before the next step. You stay in control.
+
+### Command Details
+
+<details open>
+<summary><strong>Specify</strong> - Create feature specification (DAG-based)</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         /humaninloop:specify                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │ ◄─── You invoke the command                       │
+│  └──────┬───────┘                                                   │
+│         │  ┌──────────────────┐     ┌──────────────────┐            │
+│         ├─▶│  State Analyst   │────▶│  briefing +      │            │
+│         │  │  (analysis +     │     │  assembly +      │            │
+│         │  │   graph ops)     │     │  recommendations │            │
+│         │  └──────┬───────────┘     └────────┬─────────┘            │
+│         │         │                          │                      │
+│         │         ▼                          ▼                      │
+│         │  ┌──────────────────┐     ┌───────────────────┐           │
+│         │  │   Requirements   │────▶│   Devil's         │           │
+│         │  │   Analyst        │     │   Advocate        │           │
+│         │  └────────┬─────────┘     └─────────┬─────────┘           │
+│         │           │                         │                     │
+│         │           ▼                         ▼                     │
+│         │      ┌─────────┐         ┌────────────────────┐           │
+│         │      │ spec.md │         │ gaps? → new pass   │           │
+│         │      └─────────┘         └────────────────────┘           │
+│         │                                                           │
+│         ▼  Deterministic DAG tracks all nodes, edges, and status    │
+│  ┌──────────────────────────────────────────────────────────┐       │
+│  │  StrategyGraph JSON  (single DAG, multi-pass iteration)  │       │
+│  └──────────────────────────────────────────────────────────┘       │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: `specs/{feature}/spec.md` + StrategyGraph JSON
+
+**Agents**:
+- **State Analyst** — Strategic analysis + graph mechanics; produces briefings, assembles nodes, freezes passes, and constructs domain agent prompts
+- **Requirements Analyst** — Transforms feature requests into structured specs; no implementation details
+- **Devil's Advocate** — Reviews for gaps and ambiguity; asks clarifying questions
+
+</details>
+
+<details>
+<summary><strong>Plan</strong> - Unified analysis and design planning</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          /humaninloop:plan                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │ ◄─── Reads spec.md                                │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                Phase P1 (Analysis)                       │
+│  ┌──────────────────┐  ┌───────────────────┐  ┌─────────────────┐   │
+│  │   Technical      │─▶│   Principal       │─▶│   Devil's       │   │
+│  │   Analyst        │  │   Architect       │  │   Advocate      │   │
+│  └────────┬─────────┘  └───────────────────┘  └────────┬────────┘   │
+│           │            (feasibility gate)               │           │
+│           ▼                                            ▼           │
+│  ┌──────────────┐ ┌───────────────────┐ ┌─────────┐ ┌────────┐     │
+│  │requirements  │ │constraints-and-   │ │ nfrs.md │ │ gaps?  │     │
+│  │    .md       │ │  decisions.md     │ │         │ └────────┘     │
+│  └──────────────┘ └───────────────────┘ └─────────┘                │
+│                                                                     │
+│         │                Phase P2 (Design)                         │
+│         ▼                                                           │
+│  ┌──────────────────┐     ┌─────────────────┐                       │
+│  │   Technical      │────▶│   Devil's       │                       │
+│  │   Analyst        │     │   Advocate      │                       │
+│  └────────┬─────────┘     └────────┬────────┘                       │
+│           │                        │                               │
+│           ▼                       ▼                               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐               │
+│  │  data-   │ │contracts/│ │quickstart│ │  gaps?   │               │
+│  │ model.md │ │ api.yaml │ │   .md    │ └──────────┘               │
+│  └──────────┘ └──────────┘ └──────────┘                             │
+│           │          │           │                                  │
+│           └──────────┴───────────┘                                  │
+│                      │                                              │
+│                      ▼                                              │
+│                ┌──────────┐                                         │
+│                │ plan.md  │                                         │
+│                └──────────┘                                         │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: `specs/{feature}/plan.md` + 6 supporting artifacts
+
+**Agents**:
+- **Technical Analyst** — Produces analysis artifacts (requirements, constraints-and-decisions, NFRs) and design artifacts (data model, API contracts, integration guide)
+- **Principal Architect** — Reviews cross-artifact feasibility after analysis phase (one-time gate)
+- **Devil's Advocate** — Validates completeness, traceability, and cross-artifact consistency
+
+</details>
+
+<details>
+<summary><strong>Tasks</strong> - Generate implementation tasks</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         /humaninloop:tasks                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │ ◄─── Reads plan artifacts                         │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────┐     ┌───────────────────┐                     │
+│  │     Task         │────▶│   Devil's         │                     │
+│  │     Architect    │     │   Advocate        │                     │
+│  └────────┬─────────┘     └─────────┬─────────┘                     │
+│           │                         │                               │
+│           ▼                         ▼                               │
+│  ┌────────────────┐          ┌──────────┐                           │
+│  │ task-mapping.md│          │  gaps?   │──── yes ──┐               │
+│  └────────────────┘          └──────────┘           │               │
+│           │                       │                 ▼               │
+│           ▼                      no          ┌────────────┐         │
+│     ┌──────────┐                  │          │ clarify w/ │         │
+│     │ tasks.md │                  ▼          │    user    │         │
+│     └──────────┘            ┌──────────┐     └─────┬──────┘         │
+│                             │   done   │           │                │
+│                             └──────────┘     ◄─────┘ (loop)         │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: `specs/{feature}/tasks.md` with TDD cycles
+
+**Agents**:
+- **Task Architect** — Maps requirements to vertical slices with TDD structure; no implementation
+- **Devil's Advocate** — Ensures coverage, proper ordering, and testable increments
+
+</details>
+
+<details>
+<summary><strong>Setup</strong> - Create project constitution</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         /humaninloop:setup                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │                                                   │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────┐     Brownfield?                               │
+│  │ Detect Codebase  │────────┬──────────────┐                       │
+│  └──────────────────┘        │              │                       │
+│                             yes             no                      │
+│                              │              │                       │
+│                              ▼              │                       │
+│                    ┌──────────────────┐     │                       │
+│                    │    Principal     │     │                       │
+│                    │    Architect     │     │                       │
+│                    └────────┬─────────┘     │                       │
+│                             │               │                       │
+│         ┌───────────────────┼───────────────┤                       │
+│         ▼                   ▼               ▼                       │
+│  ┌────────────┐    ┌────────────────┐  ┌────────────┐               │
+│  │  codebase- │    │  constitution  │  │constitution│               │
+│  │analysis.md │    │     .md        │  │    .md     │               │
+│  └────────────┘    └────────────────┘  └────────────┘               │
+│         │                   │                                       │
+│         ▼                   │                                       │
+│  ┌────────────┐             │                                       │
+│  │ evolution- │             │                                       │
+│  │ roadmap.md │             │                                       │
+│  └────────────┘             │                                       │
+│         └───────────────────┘                                       │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: `.humaninloop/memory/constitution.md`
+
+**Agents**:
+- **Principal Architect** — Defines governance principles and quality gates; enforces RFC 2119 keywords
+
+</details>
+
+<details>
+<summary><strong>Audit</strong> - Analyze artifacts for quality</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         /humaninloop:audit                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │ ◄─── No agents, direct analysis                   │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────────────────────────────────────────────┐       │
+│  │                    Load Artifacts                         │       │
+│  │  spec.md │ plan.md │ tasks.md │ data-model │ contracts   │       │
+│  └──────────────────────────┬───────────────────────────────┘       │
+│                             │                                       │
+│         ┌───────────────────┼───────────────────┐                   │
+│         ▼                   ▼                   ▼                   │
+│  ┌────────────┐      ┌────────────┐      ┌────────────┐             │
+│  │   Spec     │      │   Plan     │      │   Task     │             │
+│  │  Analysis  │      │  Validation│      │ Validation │             │
+│  └────────────┘      └────────────┘      └────────────┘             │
+│         │                   │                   │                   │
+│         └───────────────────┴───────────────────┘                   │
+│                             │                                       │
+│                             ▼                                       │
+│                    ┌────────────────┐                               │
+│                    │  Audit Report  │                               │
+│                    │ (stdout/file)  │                               │
+│                    └────────────────┘                               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: Coverage report + flagged issues
+
+**Agents**: None — direct analysis using validation skills
+
+</details>
+
+<details>
+<summary><strong>Implement</strong> - Execute the task plan</summary>
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                       /humaninloop:implement                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐                                                   │
+│  │  SUPERVISOR  │ ◄─── Reads tasks.md                               │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────────────────────────────────────────────┐       │
+│  │               Foundation Cycles (Sequential)              │       │
+│  │   C1 ──▶ C2 ──▶ C3 ──▶ ...                               │       │
+│  └──────────────────────────┬───────────────────────────────┘       │
+│                             │                                       │
+│                             ▼                                       │
+│  ┌──────────────────────────────────────────────────────────┐       │
+│  │                Feature Cycles (Can Parallel)              │       │
+│  │   C4 ──┬──▶ C5                                           │       │
+│  │        └──▶ C6 [P]                                       │       │
+│  └──────────────────────────┬───────────────────────────────┘       │
+│                             │                                       │
+│  For each cycle:            │                                       │
+│  ┌──────────────────────────┴───────────────────────────────┐       │
+│  │  T1 (test) ──▶ T2 (impl) ──▶ T3 (impl) ──▶ Checkpoint    │       │
+│  │       │                                                   │       │
+│  │       ▼ (if TEST: marker)                                │       │
+│  │  ┌─────────────────┐                                     │       │
+│  │  │   QA Engineer   │ ──▶ auto-approve or human checkpoint│       │
+│  │  └─────────────────┘                                     │       │
+│  └──────────────────────────────────────────────────────────┘       │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Output**: Implemented code + marked tasks
+
+**Agents**:
+- **QA Engineer** — Executes verification tasks and captures evidence; auto-approves or presents checkpoints
+
+</details>
+
+---
+
+## What's Included
+
+### 6 Commands
+The full specify → plan → tasks → implement lifecycle.
+
+### 29 Skills
+Claude automatically invokes these when relevant—authoring requirements, technical specifications, analyzing codebases, designing APIs, running verification tests, managing GitHub issues, workflow strategy, and more.
+
+### 9 Specialized Agents
+Focused responsibilities: requirements analyst, technical analyst, devil's advocate, principal architect, task architect, staff engineer, QA engineer, UI designer, state analyst.
+
+See the [plugin documentation](./plugins/humaninloop/README.md) for full details.
+
+---
+
+## Quick Start
+
+### 1. Add the marketplace
 
 ```bash
-# Inside Claude Code
-/plugin marketplace add michael-laspina/claude
-/plugin install claude-workflow
+/plugin marketplace add deepeshBodh/human-in-loop
 ```
 
-## Usage
+### 2. Install the plugin
 
 ```bash
-# 1. Initialize your project (run once)
-/claude-workflow:setup
-
-# 2. Specify a feature (produces a reviewable spec)
-/claude-workflow:review user authentication
-
-# 3. Implement after spec is approved
-/claude-workflow:implement user-authentication
-
-# 4. Audit quality
-/claude-workflow:audit user-authentication
+/plugin install humaninloop
 ```
 
-## Skills
-
-| Command | Description |
-|---------|-------------|
-| `/claude-workflow:setup` | Initialize project constitution and workflow directories |
-| `/claude-workflow:review <feature>` | Generate structured spec via 3-agent review |
-| `/claude-workflow:implement <feature>` | TDD implementation loop (red/green/refactor) |
-| `/claude-workflow:audit <feature>` | Quality audit of artifacts and implementation |
-
-## Agents
-
-| Agent | Role |
-|-------|------|
-| `requirements-analyst` | Elicits testable requirements and acceptance criteria |
-| `devils-advocate` | Challenges assumptions and surfaces edge cases |
-| `technical-analyst` | Assesses feasibility and produces technical plans |
-
-## Workflow Artifacts
-
-All artifacts are saved to `.workflow/` in your project:
-
-```
-.workflow/
-├── constitution.md      ← project standards and conventions
-├── specs/               ← feature specifications (one per feature)
-├── plans/               ← technical plans (one per feature)
-├── tasks/               ← implementation task checklists
-└── artifacts/           ← diagrams, schemas, etc.
-```
-
-## Philosophy
-
-- **Humans decide, AI executes** — no architectural decisions without human approval
-- **Specs before code** — requirements are locked before implementation begins
-- **TDD by default** — every task follows red/green/refactor
-- **Auditable artifacts** — every decision is documented and traceable
-
-## Development
+### 3. Install and configure the `hil-dag` MCP server (required for specify and implement)
 
 ```bash
-# Install Claude Code
-npm install -g @anthropic-ai/claude-code
-
-# Test plugin locally
-claude --plugin-dir ./
-
-# Inside Claude Code
-/claude-workflow:setup
+uv tool install "humaninloop-brain @ git+https://github.com/deepeshBodh/human-in-loop.git#subdirectory=humaninloop_brain"
 ```
+
+Then configure the MCP server in your Claude Code settings (`.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "hil-dag": {
+      "command": "hil-dag"
+    }
+  }
+}
+```
+
+**To upgrade to the latest version:**
+
+```bash
+uv tool install --force "humaninloop-brain @ git+https://github.com/deepeshBodh/human-in-loop.git#subdirectory=humaninloop_brain"
+```
+
+### 4. Set up your project
+
+```bash
+/humaninloop:setup
+```
+
+This creates your project constitution—the standards and conventions that guide all future specifications.
+
+### 5. Create your first spec
+
+```bash
+/humaninloop:specify add user authentication with email and password
+```
+
+---
+
+## Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [Roadmap](./ROADMAP.md) | Vision and planned features |
+| [Changelog](./CHANGELOG.md) | Release history |
+| [Plugin README](./plugins/humaninloop/README.md) | Detailed command and skill reference |
+
+---
+
+## For Plugin Developers
+
+This repository serves as a reference implementation for Claude Code plugins. If you're building your own plugins, you can learn from:
+
+### Repository Structure
+
+```
+human-in-loop/
+├── humaninloop_brain/                # Deterministic DAG infrastructure (Python)
+│   ├── src/humaninloop_brain/        # Package source
+│   │   ├── entities/                 # Pydantic models (11 enums, 14 models)
+│   │   ├── graph/                    # NetworkX graph operations
+│   │   ├── validators/               # Structural + contract validators
+│   │   ├── passes/                   # Pass lifecycle management
+│   │   ├── mcp/                      # MCP server + transport-agnostic operations
+│   │   └── cli/                      # CLI adapter (delegates to mcp/operations)
+│   └── tests/                        # 403 tests, ~95% coverage
+├── plugins/humaninloop/
+│   ├── .claude-plugin/plugin.json    # Plugin manifest
+│   ├── commands/                     # Slash command definitions
+│   ├── agents/                       # 9 specialized agent definitions
+│   ├── skills/                       # 29 model-invoked skills
+│   ├── catalogs/                     # Node catalogs for DAG workflows
+│   ├── templates/                    # Workflow templates
+│   └── scripts/                      # Shell utilities
+├── docs/
+│   ├── decisions/                    # Architecture Decision Records (8 ADRs)
+│   ├── architecture/                 # DAG-first + v3 architecture docs
+│   ├── claude-plugin-documentation.md
+│   └── agent-skills-documentation.md
+└── specs/                            # Feature specifications (dogfooding)
+```
+
+### Key Resources
+
+- [Claude Code Plugin Documentation](./docs/claude-plugin-documentation.md) - Complete technical reference
+- [Agent Skills Documentation](./docs/agent-skills-documentation.md) - How skills work
+- [Architecture Decisions](./docs/decisions/) - ADRs explaining design choices
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+---
 
 ## License
 
-MIT
+MIT - See [LICENSE](./LICENSE)
