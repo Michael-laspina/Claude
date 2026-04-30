@@ -1,0 +1,33 @@
+{
+  "name": "claude-workflow",
+  "description": "A structured, human-in-the-loop development workflow plugin for Claude Code. Guides teams through Idea → Spec → Plan → Implement with mandatory human approval gates at each stage.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Claude Workflow Contributors",
+    "url": "https://github.com/michael-laspina/claude"
+  },
+  "homepage": "https://github.com/michael-laspina/claude",
+  "repository": "https://github.com/michael-laspina/claude",
+  "license": "MIT",
+  "keywords": ["workflow", "specification", "human-in-loop", "tdd", "review"],
+  "pricing": "free",
+  "env": {
+    "WORKFLOW_OUTPUT_DIR": {
+      "description": "Directory where workflow artifacts (specs, plans, tasks) are saved",
+      "required": false,
+      "type": "string"
+    }
+  },
+  "userConfiguration": {
+    "require_approval": {
+      "description": "Require explicit human approval before advancing workflow stages",
+      "type": "boolean",
+      "required": false
+    },
+    "output_format": {
+      "description": "Output format for artifacts: 'markdown' or 'json'",
+      "type": "string",
+      "required": false
+    }
+  }
+}
